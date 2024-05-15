@@ -34,9 +34,10 @@ struct SummaryView: View {
                             Text("\(notes.filter({ $0.content == item }).count)")
                         }
                     }
-                    
-                    Section(header: Text("Last Meal")) {
-                        Text(lastMealTime(notes: notes.filter { $0.content == "Nursing" || $0.content == "Formula" }))
+                    if isToday {
+                        Section(header: Text("Last Meal")) {
+                            Text(lastMealTime())
+                        }
                     }
                 }
                 .listStyle(InsetGroupedListStyle())
@@ -70,24 +71,25 @@ struct SummaryView: View {
         .padding()
     }
     
-    private func lastMealTime(notes: [BabyNote]) -> String {
-        guard let lastMeal = notes.max(by: { $0.date ?? Date() < $1.date ?? Date() }) else {
+    private func lastMealTime() -> String {
+        // Filter notes local let that are either Nursing or Formula
+        let mealNotes = babyNotes.filter { $0.content == "Nursing" || $0.content == "Formula" }
+        // Find the most recent meal note
+        guard let lastMeal = mealNotes.max(by: { $0.date ?? Date() < $1.date ?? Date() }) else {
             return "No meals recorded"
         }
-
-        // Calculate duration from now
+        // Calculate the duration from the last meal to now
         let now = Date()
         if let mealTime = lastMeal.date {
             let components = Calendar.current.dateComponents([.hour, .minute], from: mealTime, to: now)
             if let hours = components.hour, let minutes = components.minute {
-                if hours >= 0 || minutes >= 0 {
+                if hours >= 0 && minutes >= 0 {
                     return "\(hours) hours \(minutes) minutes ago"
                 } else {
                     return "Please check notes"
                 }
             }
         }
-
         return "Time unknown"
     }
 }
